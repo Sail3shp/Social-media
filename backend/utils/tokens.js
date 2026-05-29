@@ -11,7 +11,10 @@ export const generateTokens = (userId,res) => {
         maxAge: 7 * 24 * 60 * 60 * 1000
     })
 
-    return accessToken
+    return {
+        accessToken,
+        refreshToken
+    }
     
 
 }
