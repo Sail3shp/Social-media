@@ -18,6 +18,7 @@ const verifyUser = (req, res, next) => {
         req.userId = decoded.userId
         next()
     } catch (error) {
+        console.log(error,'error in jwt')
         return res.status(401).json({
             status: "fail",
             message: "Invalid or expired token"

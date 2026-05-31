@@ -16,13 +16,16 @@ export const register = async (req, res) => {
             })
         }
 
-        const exitingUser = await User.findOne({
+        const existingUser = await User.findOne({
             $or: [{ email }, { username }]
         })
-        console.log(exitingUser, !!exitingUser)
+        console.log(existingUser, !!existingUser)
         if (existingUser) {
 
             const errors = []
+            if(username.length <6 && password.length <6){
+                errors.push("Username or password too short")
+            }
 
             if (existingUser.email === email) {
                 errors.push("Email already exists")
@@ -49,7 +52,17 @@ export const register = async (req, res) => {
             password: hash
         })
         newUser.password = undefined
-        const { accessToken, refreshToken } = generateTokens(user._id, res)
+        const { accessToken, refreshToken } = generateTokens(newUser._id, res)
+
+        const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
+
+        await Session.create({
+            user: newUser._id,
+            refreshTokenHash,
+            ip: req.ip,
+            userAgent: req.headers["user-agent"]
+
+        })
         res.status(201).json({
             status: "success",
             message: "User created successfully",
@@ -93,6 +106,7 @@ export const login = async (req, res) => {
             userAgent: req.headers["user-agent"]
 
         })
+        user.password = undefined
         res.status(200).json({
             message: "User logged in successfully",
             user,

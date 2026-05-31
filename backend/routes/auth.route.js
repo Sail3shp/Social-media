@@ -1,12 +1,19 @@
 import express from 'express'
-import { getMe, login, register,refreshToken } from '../controllers/auth.controller.js'
+import { getMe, login, register,refreshToken, logout, logoutAll } from '../controllers/auth.controller.js'
 import verifyUser from '../middlewares/verifyUser.js'
+import { deleteUser } from '../controllers/user.controller.js'
 
 const router = express.Router()
 
+//auth routes
 router.post('/signup',register)
 router.post('/login',login)
 router.get('/me',verifyUser,getMe)
-router.get('/refresh',refreshToken)
+router.post('/refresh',verifyUser,refreshToken)
+router.post('/logout',verifyUser,logout)
+router.post('/logout-all',verifyUser,logoutAll)
+
+//user routes 
+router.delete('/delete',verifyUser,deleteUser)
 
 export default router
