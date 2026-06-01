@@ -3,132 +3,107 @@ import Session from "../models/session.model.js";
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { generateTokens } from "../utils/tokens.js";
+import ApiError from "../utils/ApiError.js";
+import { catchAsync } from "../middlewares/catchAsync.js";
 
 
-export const register = async (req, res) => {
-    try {
-        const { name, email, username, password } = req.body
+export const register = catchAsync(async (req, res) => {
+    const { name, email, username, password } = req.body
 
-        if (!name || !email || !username || !password) {
-            return res.status(400).json({
-                status: 'fail',
-                message: 'Please provide all fields'
-            })
-        }
-
-        const existingUser = await User.findOne({
-            $or: [{ email }, { username }]
-        })
-        console.log(existingUser, !!existingUser)
-        if (existingUser) {
-
-            const errors = []
-            if(username.length <6 && password.length <6){
-                errors.push("Username or password too short")
-            }
-
-            if (existingUser.email === email) {
-                errors.push("Email already exists")
-            }
-
-            if (existingUser.username === username) {
-                errors.push("Username already taken")
-            }
-
-            return res.status(400).json({
-                status: "fail",
-                message: errors
-            })
-        }
-
-        const salt = await bcrypt.genSalt(10)
-        const hash = await bcrypt.hash(password, salt)
-        console.log(hash)
-
-        const newUser = await User.create({
-            name,
-            email,
-            username,
-            password: hash
-        })
-        newUser.password = undefined
-        const { accessToken, refreshToken } = generateTokens(newUser._id, res)
-
-        const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
-
-        await Session.create({
-            user: newUser._id,
-            refreshTokenHash,
-            ip: req.ip,
-            userAgent: req.headers["user-agent"]
-
-        })
-        res.status(201).json({
-            status: "success",
-            message: "User created successfully",
-            token: accessToken,
-            user: newUser
-        })
-
-    } catch (error) {
-        console.log('error in register', error)
-        res.status(500).json({
-            status: 'error',
-            message: 'Internal server error'
-        })
+    if (!name || !email || !username || !password) {
+        throw new ApiError('Please provide all fields',400) 
     }
-}
 
-export const login = async (req, res) => {
-    try {
-        const { email, password } = req.body
+    const existingUser = await User.findOne({
+        $or: [{ email }, { username }]
+    })
+    console.log(existingUser, !!existingUser)
+    if (existingUser) {
 
-        const user = await User.findOne({ email }).select('+password')
-        if (!user) {
-            return res.status(400).json({
-                status: "fail",
-                message: "Invalid email or password"
-            })
+        const errors = []
+        if (username.length < 6 && password.length < 6) {
+            errors.push("Username or password too short")
         }
-        const isValidPassword = await bcrypt.compare(password, user.password)
-        if (!isValidPassword) {
-            return res.status(400).json({
-                status: "fail",
-                message: "Invalid email or password"
-            })
-        }
-        const { accessToken, refreshToken } = generateTokens(user._id, res)
-        const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
-        await Session.create({
-            user: user._id,
-            refreshTokenHash,
-            ip: req.ip,
-            userAgent: req.headers["user-agent"]
 
-        })
-        user.password = undefined
-        res.status(200).json({
-            message: "User logged in successfully",
-            user,
-            token: accessToken
-        })
-    } catch (error) {
-        console.log('error in login', error)
-        res.status(500).json({
-            status: 'error',
-            message: 'Internal server error'
-        })
+        if (existingUser.email === email) {
+            errors.push("Email already exists")
+        }
+
+        if (existingUser.username === username) {
+            errors.push("Username already taken")
+        }
+
+        throw new ApiError(errors,400)
     }
+
+    const salt = await bcrypt.genSalt(10)
+    const hash = await bcrypt.hash(password, salt)
+    console.log(hash)
+
+    const newUser = await User.create({
+        name,
+        email,
+        username,
+        password: hash
+    })
+    newUser.password = undefined
+    const { accessToken, refreshToken } = generateTokens(newUser._id, res)
+
+    const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
+
+    await Session.create({
+        user: newUser._id,
+        refreshTokenHash,
+        ip: req.ip,
+        userAgent: req.headers["user-agent"]
+
+    })
+    res.status(201).json({
+        status: "success",
+        message: "User created successfully",
+        token: accessToken,
+        user: newUser
+    })
+
 }
+)
+
+export const login = catchAsync(async (req, res, next) => {
+    const { email, password } = req.body
+
+    const user = await User.findOne({ email }).select('+password')
+    if (!user) {
+        throw new ApiError('Invalid email or password', 400)
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password)
+
+    if (!isValidPassword) {
+        throw new ApiError('Invalid email or password', 400)
+    }
+
+    const { accessToken, refreshToken } = generateTokens(user._id, res)
+    const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
+    await Session.create({
+        user: user._id,
+        refreshTokenHash,
+        ip: req.ip,
+        userAgent: req.headers["user-agent"]
+
+    })
+    user.password = undefined
+    res.status(200).json({
+        message: "User logged in successfully",
+        user,
+        token: accessToken
+    })
+})
 
 export const getMe = async (req, res) => {
     try {
         const user = await User.findById(req.userId)
         if (!user) {
-            res.status(400).json({
-                status: 'fail',
-                message: 'user not found'
-            })
+            throw new ApiError('Invalid email or password',400) 
         }
 
         res.status(200).json({
@@ -137,33 +112,22 @@ export const getMe = async (req, res) => {
             user
         })
     } catch (error) {
-        console.log('error in getMe', error)
-        res.status(500).json({
-            status: 'error',
-            message: 'Internal server error'
-        })
+        next(error)
     }
 }
 
-export const logout = async (req, res) => {
-    try {
+export const logout = catchAsync(async (req, res) => {
         const refreshToken = req.cookies.refreshToken
 
         if (!refreshToken) {
-            return res.status(400).json({
-                status: 'fail',
-                message: 'no token found'
-            })
+            throw new ApiError('No token found',400)
         }
 
         const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
         const session = await Session.findOne({ refreshTokenHash, revoked: false })
 
         if (!session) {
-            return res.status(400).json({
-                status: 'fail',
-                message: 'Invalid session'
-            })
+            throw new ApiError('Invalid session',400) 
         }
 
         res.clearCookie('refreshToken')
@@ -173,23 +137,12 @@ export const logout = async (req, res) => {
             status: 'success',
             message: 'Logged out successfully'
         })
-    } catch (error) {
-        console.log('error in logout', error)
-        res.status(500).json({
-            status: 'error',
-            message: 'Internal server error'
-        })
-    }
-}
+})
 
-export const logoutAll = async (req, res) => {
-    try {
+export const logoutAll = catchAsync(async (req, res) => {
         const refreshToken = req.cookies.refreshToken
         if (!refreshToken) {
-            return res.status(400).json({
-                status: 'fail',
-                message: 'refresh token not found'
-            })
+            throw new ApiError('Refresh token not found',400)
         }
         await Session.updateMany({
             user: req.userId,
@@ -205,23 +158,13 @@ export const logoutAll = async (req, res) => {
             message: 'Logged out from all devices'
         })
 
-    } catch (error) {
-        console.log('error in logoutAll', error)
-        res.status(500).json({
-            status: 'error',
-            message: 'Internal server error'
-        })
-    }
-}
+    } 
+)
 
-export const refreshToken = async (req, res) => {
-    try {
+export const refreshToken = catchAsync(async (req, res) => {
         const refreshToken = req.cookies.refreshToken
         if (!refreshToken) {
-            return res.status(401).json({
-                status: 'fail',
-                message: 'Unauthorized'
-            })
+            throw new ApiError('Unauthorized',401) 
         }
         const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
 
@@ -229,28 +172,17 @@ export const refreshToken = async (req, res) => {
             refreshTokenHash,
             revoked: false
         }).populate('user')
-        if(!session){
+        if (!session) {
             res.clearCookie('refreshToken')
 
-            return res.status(401).json({
-                status:'fail',
-                message:'Invalid session'
-            })
+            throw new ApiError('Invalid session',401)
         }
         session.revoked = true
         await session.save()
-        const {accessToken} = generateTokens(session.user._id,res)
+        const { accessToken } = generateTokens(session.user._id, res)
         res.status(200).json({
-            status:'success',
-            message:'token refreshed successfully',
+            status: 'success',
+            message: 'token refreshed successfully',
             token: accessToken
         })
-    } catch (error) {
-        console.log('error in logoutAll', error)
-        res.status(500).json({
-            status: 'error',
-            message: 'Internal server error'
-        })
-
-    }
-}
+})
