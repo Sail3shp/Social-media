@@ -6,6 +6,15 @@ import { connectDb } from './config/connectDb.js'
 import authRouter from './routes/auth.route.js'
 import { errorHandler } from './controllers/error.controller.js'
 dotenv.config()
+
+process.on('uncaughtException',(error) => {
+    console.log(error.name + ':' + error.message)
+    console.log('uncaught exception occurd.Shutting down...')
+    server.close(()=>{
+        process.exit(1)
+    })
+})
+
 const PORT = process.env.PORT || 9256
 const app = express()
 
@@ -19,7 +28,15 @@ app.use('/api/v1/auth',authRouter)
 
 app.use(errorHandler)
 
-app.listen(PORT,() => {
+const server = app.listen(PORT,() => {
     connectDb()
     console.log(`server is running in ${PORT}`)
+})
+
+process.on('unhandledRejection',(error) => {
+    console.log(error.name + ':' + error.message)
+    console.log('unhandled rejection occurd.Shutting down...')
+    server.close(()=>{
+        process.exit(1)
+    })
 })
