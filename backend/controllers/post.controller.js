@@ -3,7 +3,7 @@ import { catchAsync } from "../middlewares/catchAsync.js";
 import ApiError from "../utils/ApiError.js";
 import cloudinary from "../config/cloudinary.js";
 
-export const getPost = catchAsync(async(req,res) => {
+export const getPost = catchAsync(async (req, res) => {
     const posts = await Post.find()
 
     res.status(200).json({
@@ -13,11 +13,11 @@ export const getPost = catchAsync(async(req,res) => {
 })
 
 
-export const getPostById = catchAsync(async(req,res) => {
-    const {id} = req.params
+export const getPostById = catchAsync(async (req, res) => {
+    const { id } = req.params
 
-    if(!id) {
-        throw new ApiError('Please provide a valid id',400)
+    if (!id) {
+        throw new ApiError('Please provide a valid id', 400)
     }
 
     const post = await Post.findById(id)
@@ -29,14 +29,14 @@ export const getPostById = catchAsync(async(req,res) => {
 })
 
 export const createPost = catchAsync(
-    async(req,res) => {
-        const {caption,image} = req.body
+    async (req, res) => {
+        const { caption, image } = req.body
 
-        if(!caption && !image) {
-            throw new ApiError('Please provide atleast a caption or an image',400)
+        if (!caption && !image) {
+            throw new ApiError('Please provide atleast a caption or an image', 400)
         }
 
-        if(image){
+        if (image) {
             const cloudy = cloudinary.uploader.upload('../avatar-4.png')
             console.log(cloudy)
         }
@@ -46,10 +46,76 @@ export const createPost = catchAsync(
             image: cloudy?.secure_url
         })
 
-       res.status(201).json({
-        status: 'success',
-        message:'Post created',
-        data: post
-    })
+        res.status(201).json({
+            status: 'success',
+            message: 'Post created',
+            data: post
+        })
     }
+)
+
+export const deletePost = catchAsync(
+    async (req, res) => {
+        const { postId } = req.params
+
+        const post = await Post.findById(postId)
+        console.log(post.user.toString())
+        if (!post) {
+            throw new ApiError("post not found", 404)
+        }
+
+        if (post.user.toString() !== req.userId) {
+            throw new ApiError('Forbidden', 403)
+        }
+        const deletedPost = await Post.findByIdAndDelete(postId)
+
+        if (!deletedPost) {
+            throw new ApiError("Post can't be deleted", 400)
+        }
+        res.status(204).send()
+    }
+)
+
+export const likeAndUnlikePost = catchAsync(
+    async (req, res) => {
+        const { postId } = req.params
+        const post = await Post.findById(postId)
+
+        if (!post) {
+            throw new ApiError('Post not found', 404)
+        }
+        console.log(post.likes.includes(req.userId))
+
+        if (!post.likes.includes(req.userId)) {
+            const likedPost = await Post.findByIdAndUpdate(
+                postId,
+                {
+                    $addToSet: {
+                        likes: req.userId
+                    }
+                }
+            )
+            console.log(likedPost)
+            return res.status(200).json({
+                status:'success',
+                message:'Post liked'
+            })
+        }
+
+
+        const unLikePost = await Post.findByIdAndUpdate(
+            postId,
+            {
+                $pull: {
+                    likes: req.userId
+                }
+            }
+        )
+
+        res.status(200).json({
+            status:'success',
+            message:'Post unliked'
+        })
+    }
+
 )
