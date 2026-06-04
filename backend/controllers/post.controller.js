@@ -39,7 +39,7 @@ export const createPost = catchAsync(
         }
 
         if (image) {
-            const cloudy = cloudinary.uploader.upload('../avatar-4.png')
+            const cloudy = cloudinary.uploader.upload()
             console.log(cloudy)
         }
         const post = await Post.create({
