@@ -7,6 +7,9 @@ import { MdOutlineMail } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
 import { MdPassword } from "react-icons/md";
 import { MdDriveFileRenameOutline } from "react-icons/md";
+import { QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "../utils/axios";
+import toast from "react-hot-toast";
 
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
@@ -16,9 +19,29 @@ const SignUpPage = () => {
     password: "",
   });
 
+   const queryClient = useQueryClient()
+   const mutation = useMutation({
+      mutationFn: async(formData) => {
+        try {
+          console.log(formData)
+          const response = await api.post('/auth/signup',formData)
+          console.log(response.data)
+          toast.success(response.data.message)
+          return response.data
+        } catch (error) {
+          console.log(error.response.data.message)
+          toast.error(error.response.data.message)
+        }
+      },
+      onSuccess: () => {
+         queryClient.invalidateQueries({queryKey:['user']})
+      }
+    })
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(formData);
+    mutation.mutate(formData)
+   
   };
 
   const handleInputChange = (e) => {
@@ -84,8 +107,8 @@ const SignUpPage = () => {
               value={formData.password}
             />
           </label>
-          <button className='btn rounded-full btn-primary text-white'>Sign up</button>
-          {isError && <p className='text-red-500'>Something went wrong</p>}
+          <button className='btn rounded-full btn-primary text-white'>{mutation.isPending ? 'Loading...':'Sign up'}</button>
+          {mutation.isError && <p className='text-red-500'>Something went wrong</p>}
         </form>
         <div className='flex flex-col lg:w-2/3 gap-2 mt-4'>
           <p className='text-white text-lg'>Already have an account?</p>
