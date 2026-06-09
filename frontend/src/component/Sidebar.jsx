@@ -7,6 +7,7 @@ import { Link } from "react-router";
 import { BiLogOut } from "react-icons/bi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../utils/axios";
+import toast from "react-hot-toast";
 
 const Sidebar = () => {
 	const data = {
@@ -19,9 +20,7 @@ const Sidebar = () => {
 		mutationFn: async() => {
 			try {
 				const token = localStorage.getItem('token')
-				console.log('first',token)
 				const response = await api.post('/auth/logout')
-				console.log(response,token)
 				return response
 			} catch (error) {
 				console.log(error)
@@ -29,7 +28,9 @@ const Sidebar = () => {
 			}
 		},
 		onSuccess:async() => {
+			localStorage.clear()
 			await queryClient.invalidateQueries({queryKey: ['user']})
+			toast.success('user logged out')
 		}
 	})
 
