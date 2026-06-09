@@ -29,17 +29,17 @@ const Post = ({ post }) => {
         <>
             <div className='flex gap-2 items-start p-4 border-b border-gray-700'>
                 <div className='avatar'>
-                    <Link to={`/profile/${postOwner.username}`} className='w-8 rounded-full overflow-hidden'>
+                    <Link to={`/profile/${post.user.username}`} className='w-8 rounded-full overflow-hidden'>
                         <img src={postOwner.profileImg || "/avatar-placeholder.png"} />
                     </Link>
                 </div>
                 <div className='flex flex-col flex-1'>
                     <div className='flex gap-2 items-center'>
-                        <Link to={`/profile/${postOwner.username}`} className='font-bold'>
-                            {postOwner.fullName}
+                        <Link to={`/profile/${post.user.username}`} className='font-bold'>
+                            {post.user.name}
                         </Link>
                         <span className='text-gray-700 flex gap-1 text-sm'>
-                            <Link to={`/profile/${postOwner.username}`}>@{postOwner.username}</Link>
+                            <Link to={`/profile/${post.user.username}`}>@{post.user.username}</Link>
                             <span>·</span>
                             <span>{formattedDate}</span>
                         </span>
@@ -50,10 +50,10 @@ const Post = ({ post }) => {
                         )}
                     </div>
                     <div className='flex flex-col gap-3 overflow-hidden'>
-                        <span>{post.text}</span>
-                        {post.img && (
+                        <span>{post.caption}</span>
+                        {post.image && (
                             <img
-                                src={post.img}
+                                src={post.image}
                                 className='h-80 object-contain rounded-lg border border-gray-700'
                                 alt=''
                             />

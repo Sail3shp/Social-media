@@ -28,7 +28,7 @@ const ProfilePage = () => {
         fullName: "John Doe",
         username: "johndoe",
         profileImg: "/avatars/boy2.png",
-        coverImg: "/cover.png",
+        coverImg: "/avatar-placeholder.png",
         bio: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
         link: "https://youtube.com/@asaprogrammer_",
         following: ["1", "2", "3"],
@@ -84,12 +84,14 @@ const ProfilePage = () => {
                                 <input
                                     type='file'
                                     hidden
+                                    accept="image/*"
                                     ref={coverImgRef}
                                     onChange={(e) => handleImgChange(e, "coverImg")}
                                 />
                                 <input
                                     type='file'
                                     hidden
+                                    accept="image/*"
                                     ref={profileImgRef}
                                     onChange={(e) => handleImgChange(e, "profileImg")}
                                 />

@@ -12,7 +12,7 @@ const SignUpPage = () => {
   const [formData, setFormData] = useState({
     email: "",
     username: "",
-    fullName: "",
+    name: "",
     password: "",
   });
 
@@ -67,9 +67,9 @@ const SignUpPage = () => {
                 type='text'
                 className='grow'
                 placeholder='Full Name'
-                name='fullName'
+                name='name'
                 onChange={handleInputChange}
-                value={formData.fullName}
+                value={formData.name}
               />
             </label>
           </div>
