@@ -25,6 +25,24 @@ const userSchema = new mongoose.Schema({
     avatar: {
         type: String,
     },
+    coverImg: {
+        type: String,
+        default: "",
+    },
+    following: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: [],
+        }
+    ],
+    followers: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: [],
+        }
+    ],
     bio: {
         type: String,
         maxlength: [50, "bio can't be more than 50 characters"],
@@ -34,6 +52,6 @@ const userSchema = new mongoose.Schema({
     { timestamps: true }
 )
 
-const User = mongoose.model('User',userSchema)
+const User = mongoose.model('User', userSchema)
 
 export default User

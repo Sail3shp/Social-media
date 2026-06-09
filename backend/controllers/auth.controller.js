@@ -13,18 +13,15 @@ export const register = catchAsync(async (req, res) => {
     if (!name || !email || !username || !password) {
         throw new ApiError('Please provide all fields',400) 
     }
+    console.log(name,email,username,password)
 
     const existingUser = await User.findOne({
         $or: [{ email }, { username }]
     })
     console.log(existingUser, !!existingUser)
+    const errors = []
     if (existingUser) {
-
-        const errors = []
-        if (username.length < 6 && password.length < 6) {
-            errors.push("Username or password too short")
-        }
-
+        
         if (existingUser.email === email) {
             errors.push("Email already exists")
         }
@@ -34,6 +31,10 @@ export const register = catchAsync(async (req, res) => {
         }
 
         throw new ApiError(errors,400)
+    }
+
+    if(username.length < 6 && password.length < 6){
+        throw new ApiError('Username & password must be greater than 6 characters',400)
     }
 
     const salt = await bcrypt.genSalt(10)
