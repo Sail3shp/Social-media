@@ -165,3 +165,28 @@ export const updatePost = catchAsync(
         })
     }
 )
+
+export const getFollowingPoints = catchAsync(
+    async(req,res)=> {
+        const userId = req.userId;
+        console.log(userId)
+		const user = await User.findById(userId);
+        console.log(user)
+		if (!user) return res.status(404).json({ error: "User not found" });
+
+		const following = user.following;
+
+		const feedPosts = await Post.find({ user: { $in: following } })
+			.sort({ createdAt: -1 })
+			.populate({
+				path: "user",
+				select: "-password",
+			})
+			.populate({
+				path: "comments.user",
+				select: "-password",
+			});
+
+		res.status(200).json(feedPosts);
+    }
+)
