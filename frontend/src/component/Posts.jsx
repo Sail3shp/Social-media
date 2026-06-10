@@ -4,7 +4,22 @@ import { POSTS } from "../utils/dummy";
 import { useQueryClient,useQuery } from "@tanstack/react-query";
 import { api } from "../utils/axios";
 
-const Posts = () => {
+const Posts = ({feedType}) => {
+
+	console.log(feedType)
+	const getFeed = () => {
+		switch (feedType) {
+			case 'forYou':
+				return '/post'
+			case 'following':
+				return '/post/following'
+			default:
+				return '/post';
+		}
+	}
+
+	const POST_ENDPOINT = getFeed()
+	console.log(POST_ENDPOINT)
 	const queryClient = useQueryClient()
 	const {data:posts,isLoading,isError,isSuccess} = useQuery({ queryKey: ['posts'], queryFn: async() => {
 		const response = await api.get('/post')
