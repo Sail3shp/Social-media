@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { Link } from "react-router";
+import { Link, useParams } from "react-router";
+import { useEffect } from "react";
 
 import Posts from "../component/Posts";
 import ProfileHeaderSkeleton from "../component/ProfileHeaderSkeleton";
@@ -11,31 +12,42 @@ import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
 import { FaLink } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery,useQueryClient } from "@tanstack/react-query";
+import { api } from "../utils/axios.js";
 
 const ProfilePage = () => {
     //const {data: authUser} = useQuery({queryKey: ['user']})
     const [coverImg, setCoverImg] = useState(null);
     const [profileImg, setProfileImg] = useState(null);
     const [feedType, setFeedType] = useState("posts");
+    const queryClient = useQueryClient()
+
+    let {username} = useParams()
+
+	const { user:authUser } = queryClient.getQueryData(['user']);
+
+    const {data:user,isLoading,refetch,isRefetching} = useQuery({
+		queryKey: ['userDetail'],
+		queryFn: async() => {
+			try {
+				const res = await api.get(`/auth/${username}`)
+				return res.data
+			} catch (error) {
+				console.log(error.response,error)
+				return null
+			}
+		},
+	})
+
+    useEffect(() => {
+		refetch()
+	},[refetch,username])
 
     const coverImgRef = useRef(null);
     const profileImgRef = useRef(null);
 
-    const isLoading = false;
-    const isMyProfile = true;
+    const isMyProfile = user?.data?._id == authUser?._id;
 
-    const user = {
-        _id: "1",
-        fullName: "John Doe",
-        username: "johndoe",
-        profileImg: "/avatars/boy2.png",
-        coverImg: "/avatar-placeholder.png",
-        bio: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-        link: "https://youtube.com/@asaprogrammer_",
-        following: ["1", "2", "3"],
-        followers: ["1", "2", "3"],
-    };
 
     const handleImgChange = (e, state) => {
         const file = e.target.files[0];
@@ -63,14 +75,14 @@ const ProfilePage = () => {
                                     <FaArrowLeft className='w-4 h-4' />
                                 </Link>
                                 <div className='flex flex-col'>
-                                    <p className='font-bold text-lg'>{user?.fullName}</p>
-                                    <span className='text-sm text-slate-500'>{POSTS?.length} posts</span>
+                                    <p className='font-bold text-lg'>{user?.data?.name}</p>
+                                    <span className='text-sm text-slate-500'>{POSTS?.length || 5} posts</span>
                                 </div>
                             </div>
                             {/* COVER IMG */}
                             <div className='relative group/cover'>
                                 <img
-                                    src={coverImg || user?.coverImg || "/cover.png"}
+                                    src={coverImg || user?.data?.coverImg || "/cover.png"}
                                     className='h-52 w-full object-cover'
                                     alt='cover image'
                                 />
@@ -100,7 +112,7 @@ const ProfilePage = () => {
                                 {/* USER AVATAR */}
                                 <div className='avatar absolute -bottom-16 left-4'>
                                     <div className='w-32 rounded-full relative group/avatar'>
-                                        <img src={profileImg || user?.profileImg || "/avatar-placeholder.png"} />
+                                        <img src={profileImg || user?.data?.profileImg || "/avatar-placeholder.png"} />
                                         <div className='absolute top-5 right-3 p-1 bg-primary rounded-full group-hover/avatar:opacity-100 opacity-0 cursor-pointer'>
                                             {isMyProfile && (
                                                 <MdEdit
@@ -134,27 +146,12 @@ const ProfilePage = () => {
 
                             <div className='flex flex-col gap-4 mt-14 px-4'>
                                 <div className='flex flex-col'>
-                                    <span className='font-bold text-lg'>{user?.fullName}</span>
-                                    <span className='text-sm text-slate-500'>@{user?.username}</span>
-                                    <span className='text-sm my-1'>{user?.bio}</span>
+                                    <span className='font-bold text-lg'>{user?.data?.name}</span>
+                                    <span className='text-sm text-slate-500'>@{user?.data?.username}</span>
+                                    <span className='text-sm my-1'>{user?.data?.bio}</span>
                                 </div>
 
                                 <div className='flex gap-2 flex-wrap'>
-                                    {user?.link && (
-                                        <div className='flex gap-1 items-center '>
-                                            <>
-                                                <FaLink className='w-3 h-3 text-slate-500' />
-                                                <a
-                                                    href='https://youtube.com/@asaprogrammer_'
-                                                    target='_blank'
-                                                    rel='noreferrer'
-                                                    className='text-sm text-blue-500 hover:underline'
-                                                >
-                                                    youtube.com/@asaprogrammer_
-                                                </a>
-                                            </>
-                                        </div>
-                                    )}
                                     <div className='flex gap-2 items-center'>
                                         <IoCalendarOutline className='w-4 h-4 text-slate-500' />
                                         <span className='text-sm text-slate-500'>Joined July 2021</span>
@@ -162,11 +159,11 @@ const ProfilePage = () => {
                                 </div>
                                 <div className='flex gap-2'>
                                     <div className='flex gap-1 items-center'>
-                                        <span className='font-bold text-xs'>{user?.following.length}</span>
+                                        <span className='font-bold text-xs'>{user?.data?.following.length}</span>
                                         <span className='text-slate-500 text-xs'>Following</span>
                                     </div>
                                     <div className='flex gap-1 items-center'>
-                                        <span className='font-bold text-xs'>{user?.followers.length}</span>
+                                        <span className='font-bold text-xs'>{user?.data?.followers.length}</span>
                                         <span className='text-slate-500 text-xs'>Followers</span>
                                     </div>
                                 </div>

@@ -42,7 +42,7 @@ function App() {
         <Route path='/' element={user ? <HomePage /> : <Navigate to={'/login'} />} />
         <Route path='/login' element={!user ? <LoginPage /> : <Navigate to={'/'} />} />
         <Route path='/signup' element={!user ? <SignupPage /> : <Navigate to={'/'} />} />
-        <Route path='/profile/johndoe' element={user ? <ProfilePage /> : <Navigate to={'/login'} />} />
+        <Route path='/profile/:username' element={user ? <ProfilePage /> : <Navigate to={'/login'} />} />
       </Routes>
       {user &&<RightPanel />}
       <Toaster />
