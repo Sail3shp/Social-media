@@ -3,10 +3,10 @@ import PostSkeleton from "./PostSkeleton";
 import { POSTS } from "../utils/dummy";
 import { useQueryClient,useQuery } from "@tanstack/react-query";
 import { api } from "../utils/axios";
+import { useEffect } from "react";
 
 const Posts = ({feedType}) => {
 
-	console.log(feedType)
 	const getFeed = () => {
 		switch (feedType) {
 			case 'forYou':
@@ -19,25 +19,29 @@ const Posts = ({feedType}) => {
 	}
 
 	const POST_ENDPOINT = getFeed()
-	console.log(POST_ENDPOINT)
+
 	const queryClient = useQueryClient()
-	const {data:posts,isLoading,isError,isSuccess} = useQuery({ queryKey: ['posts'], queryFn: async() => {
-		const response = await api.get('/post')
+
+	const {data:posts,isLoading,isError,isSuccess,refetch,isRefetching} = useQuery({ queryKey: ['posts'], queryFn: async() => {
+		const response = await api.get(POST_ENDPOINT)
 		return response.data
 	} })
-	console.log(posts?.data)
+
+	useEffect(() => {
+		refetch()
+	},[refetch,feedType])
 
 	return (
 		<>
-			{isLoading && (
+			{(isLoading || isRefetching) && (
 				<div className='flex flex-col justify-center'>
 					<PostSkeleton />
 					<PostSkeleton />
 					<PostSkeleton />
 				</div>
 			)}
-			{!isLoading && posts?.data?.length === 0 && <p className='text-center my-4'>No posts in this tab. Switch 👻</p>}
-			{!isLoading && posts?.data && (
+			{!isLoading &&!isRefetching && posts?.data?.length === 0 && <p className='text-center my-4'>No posts in this tab. Switch 👻</p>}
+			{!isLoading && !isRefetching && posts?.data && (
 				<div>
 					{posts?.data.map((post) => (
 						<Post key={post._id} post={post} />
