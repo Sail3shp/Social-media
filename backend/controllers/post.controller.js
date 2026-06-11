@@ -33,14 +33,14 @@ export const getPostById = catchAsync(async (req, res) => {
 
 export const createPost = catchAsync(
     async (req, res) => {
-        const { caption, image } = req.body
+        let { caption, image } = req.body
 
         if (!caption && !image) {
             throw new ApiError('Please provide atleast a caption or an image', 400)
         }
 
         if (image) {
-            const cloudy = await cloudinary.uploader.upload()
+            const cloudy = await cloudinary.uploader.upload(image)
             image = cloudy?.secure_url
             console.log(cloudy)
         }

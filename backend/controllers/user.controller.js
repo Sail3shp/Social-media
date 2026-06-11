@@ -1,3 +1,4 @@
+import { catchAsync } from "../middlewares/catchAsync.js";
 import User from "../models/User.model.js";
 import Session from "../models/session.model.js";
 import { refreshToken } from "./auth.controller.js";
@@ -33,3 +34,31 @@ export const deleteUser = async (req, res) => {
     }
 
 }
+
+export const suggestedUsers = catchAsync(
+    async(req,res) => {
+        const userId = req.userId;
+
+		const usersFollowedByMe = await User.findById(userId).select("following");
+
+		const users = await User.aggregate([
+			{
+				$match: {
+					_id: { $ne: userId },
+				},
+			},
+			{ $sample: { size: 10 } },
+		]);
+
+		// 1,2,3,4,5,6,
+		const filteredUsers = users.filter((user) => !usersFollowedByMe.following.includes(user._id));
+		const suggestedUsers = filteredUsers.slice(0, 4);
+
+		suggestedUsers.forEach((user) => (user.password = null));
+
+		res.status(200).json({
+            status:'success',
+            data: suggestedUsers
+        });
+    }
+)
