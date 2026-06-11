@@ -1,6 +1,7 @@
 import { catchAsync } from "../middlewares/catchAsync.js";
 import User from "../models/User.model.js";
 import Session from "../models/session.model.js";
+import ApiError from "../utils/ApiError.js";
 import { refreshToken } from "./auth.controller.js";
 //updat,delete,changepassword,resetpassword
 
@@ -60,5 +61,23 @@ export const suggestedUsers = catchAsync(
             status:'success',
             data: suggestedUsers
         });
+    }
+)
+
+export const getUserDetails = catchAsync(
+    async(req,res) => {
+        const {username} = req.params
+        console.log(username)
+        const user = await User.findOne({
+            username:req.params.username
+        })
+        console.log(user)
+        if(!user) throw new ApiError('user not found',404)
+
+
+        return res.status(200).json({
+            status:'success',
+            data: user
+        })
     }
 )
