@@ -2,9 +2,10 @@ import Post from "../models/post.model.js";
 import { catchAsync } from "../middlewares/catchAsync.js";
 import ApiError from "../utils/ApiError.js";
 import cloudinary from "../config/cloudinary.js";
+import User from '../models/User.model.js'
 
 export const getPost = catchAsync(async (req, res) => {
-    const posts = await Post.find().sort({createdAt: -1}).populate({
+    const posts = await Post.find().sort({ createdAt: -1 }).populate({
         path: 'user'
     })
 
@@ -39,13 +40,14 @@ export const createPost = catchAsync(
         }
 
         if (image) {
-            const cloudy = cloudinary.uploader.upload()
+            const cloudy = await cloudinary.uploader.upload()
+            image = cloudy?.secure_url
             console.log(cloudy)
         }
         const post = await Post.create({
             user: req.userId,
             caption,
-            image: cloudy?.secure_url
+            image
         })
 
         res.status(201).json({
@@ -132,21 +134,21 @@ export const updatePost = catchAsync(
         const { image, caption } = req.body
 
         const updateData = {}
-        
+
         if (image !== undefined) updateData.image = image
         if (caption !== undefined) updateData.caption = caption
 
         const post = await Post.findById(postId)
-        if(!post){
-            throw new ApiError('Post not found',404)
+        if (!post) {
+            throw new ApiError('Post not found', 404)
         }
-        if(post.user.toString() !== req.userId){
-            throw new ApiError('This post doesn\'t belong to you ' ,403)
+        if (post.user.toString() !== req.userId) {
+            throw new ApiError('This post doesn\'t belong to you ', 403)
         }
         if (image) {
             const cloudy = await cloudinary.uploader.upload('../avatar-4.png')
             updateData.image = cloudy?.secure_url
-            if(post.image){
+            if (post.image) {
                 await cloudinary.uploader.destroy(post.image.split("/").pop().split(".")[0])
             }
         }
@@ -155,7 +157,7 @@ export const updatePost = catchAsync(
             throw new ApiError('No fields provided for update', 400)
         }
 
-        const updatedPost = await Post.findByIdAndUpdate(postId,updateData,{new: true})
+        const updatedPost = await Post.findByIdAndUpdate(postId, updateData, { new: true })
 
 
         res.status(200).json({
@@ -167,26 +169,26 @@ export const updatePost = catchAsync(
 )
 
 export const getFollowingPoints = catchAsync(
-    async(req,res)=> {
-        const userId = req.userId;
-        console.log(userId)
-		const user = await User.findById(userId);
-        console.log(user)
-		if (!user) return res.status(404).json({ error: "User not found" });
+    async (req, res) => {
+        const activeUser = await User.findById(req.userId)
+        if (!activeUser) return res.status(404).json({ error: "User not found" });
 
-		const following = user.following;
+        const following = activeUser.following;
 
-		const feedPosts = await Post.find({ user: { $in: following } })
-			.sort({ createdAt: -1 })
-			.populate({
-				path: "user",
-				select: "-password",
-			})
-			.populate({
-				path: "comments.user",
-				select: "-password",
-			});
+        const feedPosts = await Post.find({ user: { $in: following } })
+            .sort({ createdAt: -1 })
+            .populate({
+                path: "user",
+                select: "-password",
+            })
+            .populate({
+                path: "comments.user",
+                select: "-password",
+            });
 
-		res.status(200).json(feedPosts);
+        res.status(200).json({
+            status:'success',
+            data: feedPosts
+        });
     }
 )

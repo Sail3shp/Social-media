@@ -5,11 +5,11 @@ import verifyUser from '../middlewares/verifyUser.js'
 const router = express.Router()
 
 router.get('/',getPost)
+router.get('/following',verifyUser,getFollowingPoints)
 router.get('/:id',getPostById)
 
 router.post('/',verifyUser,createPost)
 router.delete('/:postId',verifyUser,deletePost)
 router.patch('/:postId',verifyUser,likeAndUnlikePost)
-router.get('/following',verifyUser,getFollowingPoints)
 
 export default router
