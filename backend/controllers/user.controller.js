@@ -92,28 +92,23 @@ export const followUnfollow = catchAsync(
             throw new ApiError('User not found', 404)
         }
 
-        const isFollowing = followUnfollowUser.followers.find((follower) => follower == req.userId)
+        if (req.userId === req.params.id) {
+            throw new ApiError("You cannot follow yourself", 400);
+        }
+
+        const isFollowing = followUnfollowUser.followers.find((follower) => follower.toString() === req.userId)
         console.log(isFollowing)
 
         if (!isFollowing) {
 
-            const newUser = await User.findByIdAndUpdate(
-                req.params.id,
-                {
-                    $addToSet: {
-                        followers: req.userId
-                    }
-                }
-            )
-
-            const followedUser = await User.findByIdAndUpdate(
-                req.userId,
-                {
-                    $addToSet: {
-                        following: req.params.id
-                    }
-                }
-            )
+            await Promise.all([
+                User.findByIdAndUpdate(req.params.id, {
+                    $addToSet: { followers: req.userId }
+                }),
+                User.findByIdAndUpdate(req.userId, {
+                    $addToSet: { following: req.params.id }
+                })
+            ]);
 
             return res.status(201).json({
                 status: 'success',
@@ -121,23 +116,14 @@ export const followUnfollow = catchAsync(
             })
         }
 
-        const oldUser = await User.findByIdAndUpdate(
-            req.params.id,
-            {
-                $pull: {
-                    followers: req.userId
-                }
-            }
-        )
-
-        const unfollowedUser = await User.findByIdAndUpdate(
-            req.userId,
-            {
-                $pull: {
-                    following: req.params.id
-                }
-            }
-        )
+        await Promise.all([
+            User.findByIdAndUpdate(req.params.id, {
+                $pull: { followers: req.userId }
+            }),
+            User.findByIdAndUpdate(req.userId, {
+                $pull: { following: req.params.id }
+            })
+        ]);
         res.status(201).json({
             status: 'success',
             message: 'User unfollowed successfully'
