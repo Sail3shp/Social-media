@@ -2,11 +2,12 @@ import { Link } from "react-router";
 import RightPanelSkeleton from "./RightPanelSkeleton";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../utils/axios";
+import { useFollow } from "../hooks/useFollow";
 
 const RightPanel = () => {
-	const {data:suggestedUsers,isLoading} = useQuery({
+	const { data: suggestedUsers, isLoading } = useQuery({
 		queryKey: ['suggestedUsers'],
-		queryFn: async() => {
+		queryFn: async () => {
 			try {
 				const res = await api.get('/auth/suggested')
 				return res.data
@@ -16,6 +17,8 @@ const RightPanel = () => {
 			}
 		}
 	})
+
+	const { follow, isPending } = useFollow()
 
 	return (
 		<div className='hidden lg:block my-4 mx-2'>
@@ -54,7 +57,10 @@ const RightPanel = () => {
 								<div>
 									<button
 										className='btn bg-white text-black hover:bg-white hover:opacity-90 rounded-full btn-sm'
-										onClick={(e) => e.preventDefault()}
+										onClick={(e) => {
+											e.preventDefault()
+											follow(user._id)
+										}}
 									>
 										Follow
 									</button>
