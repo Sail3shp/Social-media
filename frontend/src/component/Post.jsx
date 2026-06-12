@@ -14,7 +14,7 @@ const Post = ({ post }) => {
     const queryClient = useQueryClient()
     const {user} = queryClient.getQueryData(['user']);
     const postOwner = post.user;
-    const isLiked = false;
+    const isLiked = post.likes.find((like) => like === user._id.toString())
 
     const isMyPost = post.user._id == user._id;
 
@@ -40,6 +40,23 @@ const Post = ({ post }) => {
         }
     })
 
+    const {mutate:likePost} = useMutation({
+        mutationFn: async() => {
+            try {
+                const res = await api.patch(`/post/${post._id}`)
+                return res.data
+            } catch (error) {
+                console.log(error)
+                return 'something went wrong'
+            }
+        },
+        onSuccess: async(data) => {
+            toast.success(data?.message)
+            await queryClient.invalidateQueries({ queryKey: ['posts'] })
+
+        }
+    })
+
     const handleDeletePost = () => { 
         deletePost()
     };
@@ -48,7 +65,9 @@ const Post = ({ post }) => {
         e.preventDefault();
     };
 
-    const handleLikePost = () => { };
+    const handleLikePost = () => {
+        likePost()
+     };
 
     return (
         <>
