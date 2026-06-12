@@ -1,7 +1,7 @@
 import express from 'express'
 import { getMe, login, register,refreshToken, logout, logoutAll } from '../controllers/auth.controller.js'
 import verifyUser from '../middlewares/verifyUser.js'
-import { deleteUser, getUserDetails, suggestedUsers } from '../controllers/user.controller.js'
+import { deleteUser, followUnfollow, getUserDetails, suggestedUsers } from '../controllers/user.controller.js'
 
 const router = express.Router()
 
@@ -17,5 +17,6 @@ router.post('/logout-all',verifyUser,logoutAll)
 router.delete('/delete',verifyUser,deleteUser)
 router.get('/suggested',verifyUser,suggestedUsers)
 router.get('/:username',getUserDetails)
+router.post('/follow/:id',verifyUser,followUnfollow)
 
 export default router

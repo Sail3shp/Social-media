@@ -37,47 +37,112 @@ export const deleteUser = async (req, res) => {
 }
 
 export const suggestedUsers = catchAsync(
-    async(req,res) => {
+    async (req, res) => {
         const userId = req.userId;
 
-		const usersFollowedByMe = await User.findById(userId).select("following");
+        const usersFollowedByMe = await User.findById(userId).select("following");
 
-		const users = await User.aggregate([
-			{
-				$match: {
-					_id: { $ne: userId },
-				},
-			},
-			{ $sample: { size: 10 } },
-		]);
+        const users = await User.aggregate([
+            {
+                $match: {
+                    _id: { $ne: userId },
+                },
+            },
+            { $sample: { size: 10 } },
+        ]);
 
-		// 1,2,3,4,5,6,
-		const filteredUsers = users.filter((user) => !usersFollowedByMe.following.includes(user._id));
-		const suggestedUsers = filteredUsers.slice(0, 4);
+        // 1,2,3,4,5,6,
+        const filteredUsers = users.filter((user) => !usersFollowedByMe.following.includes(user._id));
+        const suggestedUsers = filteredUsers.slice(0, 4);
 
-		suggestedUsers.forEach((user) => (user.password = null));
+        suggestedUsers.forEach((user) => (user.password = null));
 
-		res.status(200).json({
-            status:'success',
+        res.status(200).json({
+            status: 'success',
             data: suggestedUsers
         });
     }
 )
 
 export const getUserDetails = catchAsync(
-    async(req,res) => {
-        const {username} = req.params
+    async (req, res) => {
+        const { username } = req.params
         console.log(username)
         const user = await User.findOne({
-            username:req.params.username
+            username: req.params.username
         })
         console.log(user)
-        if(!user) throw new ApiError('user not found',404)
+        if (!user) throw new ApiError('user not found', 404)
 
 
         return res.status(200).json({
-            status:'success',
+            status: 'success',
             data: user
         })
+    }
+)
+
+export const followUnfollow = catchAsync(
+    async (req, res) => {
+        const user = await User.findById(req.userId)
+
+        const followUnfollowUser = await User.findById(req.params.id)
+
+        if (!user || !followUnfollowUser) {
+            throw new ApiError('User not found', 404)
+        }
+
+        const isFollowing = followUnfollowUser.followers.find((follower) => follower == req.userId)
+        console.log(isFollowing)
+
+        if (!isFollowing) {
+
+            const newUser = await User.findByIdAndUpdate(
+                req.params.id,
+                {
+                    $addToSet: {
+                        followers: req.userId
+                    }
+                }
+            )
+
+            const followedUser = await User.findByIdAndUpdate(
+                req.userId,
+                {
+                    $addToSet: {
+                        following: req.params.id
+                    }
+                }
+            )
+
+            return res.status(201).json({
+                status: 'success',
+                message: 'User followed successfully'
+            })
+        }
+
+        const oldUser = await User.findByIdAndUpdate(
+            req.params.id,
+            {
+                $pull: {
+                    followers: req.userId
+                }
+            }
+        )
+
+        const unfollowedUser = await User.findByIdAndUpdate(
+            req.userId,
+            {
+                $pull: {
+                    following: req.params.id
+                }
+            }
+        )
+        res.status(201).json({
+            status: 'success',
+            message: 'User unfollowed successfully'
+        })
+
+
     }
 )
