@@ -20,7 +20,6 @@ const Post = ({ post }) => {
 
     const formattedDate = "1h";
 
-    const isCommenting = false;
 
     const {mutate:deletePost,isPending} = useMutation({
         mutationFn: async() => {
@@ -57,12 +56,34 @@ const Post = ({ post }) => {
         }
     })
 
+    const {mutate:commentPost,isPending:isCommenting} = useMutation({
+        mutationFn: async() => {
+            try {
+                const res = await api.post(`/post/comment/${post._id}`,{
+                    text: comment
+                })
+                console.log(res)
+                return res.data
+            } catch (error) {
+                console.log(error)
+                return 'something went wrong'
+            }
+        },
+        onSuccess: async(data) => {
+            toast.success(data?.message)
+            await queryClient.invalidateQueries({ queryKey: ['posts'] })
+
+        }
+    })
+
     const handleDeletePost = () => { 
         deletePost()
     };
 
     const handlePostComment = (e) => {
         e.preventDefault();
+        if(isCommenting) return
+        commentPost()
     };
 
     const handleLikePost = () => {
@@ -135,7 +156,7 @@ const Post = ({ post }) => {
                                                 </div>
                                                 <div className='flex flex-col'>
                                                     <div className='flex items-center gap-1'>
-                                                        <span className='font-bold'>{comment.user.fullName}</span>
+                                                        <span className='font-bold'>{comment.user.name}</span>
                                                         <span className='text-gray-700 text-sm'>
                                                             @{comment.user.username}
                                                         </span>
