@@ -7,6 +7,9 @@ import User from '../models/User.model.js'
 export const getPost = catchAsync(async (req, res) => {
     const posts = await Post.find().sort({ createdAt: -1 }).populate({
         path: 'user'
+    }).populate({
+        path: "comments.user",
+        select: "-password",
     })
 
     res.status(200).json({
@@ -187,8 +190,86 @@ export const getFollowingPoints = catchAsync(
             });
 
         res.status(200).json({
-            status:'success',
+            status: 'success',
             data: feedPosts
         });
     }
 )
+
+export const commentOnPost = catchAsync(
+    async (req, res) => {
+
+        const { postId } = req.params
+        const { text } = req.body
+        const userId = req.userId
+
+        const post = await Post.findById(postId)
+
+        if (!post) {
+            throw new ApiError('post not found', 404)
+        }
+
+        const commentedPost = await Post.findByIdAndUpdate(postId, {
+            $push: {
+                comments: {
+                    text: text,
+                    user: userId,
+                },
+            },
+        }, { new: true }
+        )
+
+        if (!commentedPost) {
+            throw new ApiError('couldn\'t comment on this post', 400)
+        }
+
+        res.status(201).json({
+            status: 'success',
+            commentedPost
+        })
+
+    }
+)
+
+export const getLikedPosts = catchAsync(
+    async(req,res) => {
+        const {userId} = req.params
+
+        const posts = await Post.find({
+            likes:{
+                $in: [userId]
+            }
+        }).populate('user')
+
+        if(!posts){
+            throw new ApiError('No liked posts',400)
+        }
+
+        res.status(200).json({
+            status: 'success',
+            data: posts
+        })
+    }
+)
+
+export const getAllPostOfUser = catchAsync(
+    async(req,res) => {
+
+        const {username} = req.params
+
+        const posts = await Post.find({
+            user:{
+                $in: [username]
+            }
+        }).populate('user')
+
+        if(!posts){
+            throw new ApiError('post not found',404)
+        }
+
+        res.status(200).json({
+            status: 'success',
+            data: posts 
+        })
+    }
+) 
