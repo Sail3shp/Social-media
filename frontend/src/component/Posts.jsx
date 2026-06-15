@@ -5,7 +5,7 @@ import { useQueryClient,useQuery } from "@tanstack/react-query";
 import { api } from "../utils/axios";
 import { useEffect } from "react";
 
-const Posts = ({feedType}) => {
+const Posts = ({feedType,username,userId}) => {
 
 	const getFeed = () => {
 		switch (feedType) {
@@ -13,6 +13,11 @@ const Posts = ({feedType}) => {
 				return '/post'
 			case 'following':
 				return '/post/following'
+			case 'posts':
+				return `/post/users/${username}`
+			case 'likes':
+				return `/post/likes/${userId}`
+				
 			default:
 				return '/post';
 		}
@@ -29,7 +34,7 @@ const Posts = ({feedType}) => {
 
 	useEffect(() => {
 		refetch()
-	},[refetch,feedType])
+	},[refetch,feedType,username])
 
 	return (
 		<>
