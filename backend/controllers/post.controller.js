@@ -232,17 +232,24 @@ export const commentOnPost = catchAsync(
 )
 
 export const getLikedPosts = catchAsync(
-    async(req,res) => {
-        const {userId} = req.params
+    async (req, res) => {
+        const { userId } = req.params
 
         const posts = await Post.find({
-            likes:{
+            likes: {
                 $in: [userId]
             }
-        }).populate('user')
+        }).populate({
+				path: "user",
+				select: "-password",
+			})
+			.populate({
+				path: "comments.user",
+				select: "-password",
+			})
 
-        if(!posts){
-            throw new ApiError('No liked posts',400)
+        if (!posts) {
+            throw new ApiError('No liked posts', 400)
         }
 
         res.status(200).json({
@@ -253,23 +260,28 @@ export const getLikedPosts = catchAsync(
 )
 
 export const getAllPostOfUser = catchAsync(
-    async(req,res) => {
+    async (req, res) => {
 
-        const {username} = req.params
+        const { username } = req.params;
 
-        const posts = await Post.find({
-            user:{
-                $in: [username]
-            }
-        }).populate('user')
+        const user = await User.findOne({ username });
+        if (!user) return res.status(404).json({ error: "User not found" });
 
-        if(!posts){
-            throw new ApiError('post not found',404)
-        }
+        const posts = await Post.find({ user: user._id })
+            .sort({ createdAt: -1 })
+            .populate({
+                path: "user",
+                select: "-password",
+            })
+            .populate({
+                path: "comments.user",
+                select: "-password",
+            });
+
 
         res.status(200).json({
             status: 'success',
-            data: posts 
+            data: posts
         })
     }
 ) 
