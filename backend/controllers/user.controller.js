@@ -3,6 +3,8 @@ import User from "../models/User.model.js";
 import Session from "../models/session.model.js";
 import ApiError from "../utils/ApiError.js";
 import { refreshToken } from "./auth.controller.js";
+import bcrypt from "bcryptjs";
+import cloudinary from "../config/cloudinary.js";
 //updat,delete,changepassword,resetpassword
 
 export const deleteUser = async (req, res) => {
@@ -127,6 +129,74 @@ export const followUnfollow = catchAsync(
         res.status(201).json({
             status: 'success',
             message: 'User unfollowed successfully'
+        })
+
+
+    }
+)
+
+export const updateUser = catchAsync(
+    async (req, res) => {
+        const userId = req.userId
+
+        const { name, email, username, currentPassword, newPassword, bio } = req.body;
+        let { avatar, coverImg } = req.body
+
+        let user = await User.findById(userId)
+
+        if (!user) {
+            throw new ApiError('User not found', 404)
+        }
+        if ((!newPassword && currentPassword) || (!currentPassword && newPassword)) {
+            return res.status(400).json({ error: "Please provide both current password and new password" });
+        }
+
+        if (currentPassword && newPassword) {
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
+            if (!isMatch) {
+                throw new ApiError('Current password is incorrect', 400)
+            }
+            if (newPassword.length < 6) {
+                throw new ApiError('Password must be 6 characters long', 400)
+            }
+
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(newPassword, salt);
+        }
+
+        if (avatar) {
+            if (user.avatar) {
+                await cloudinary.uploader.destroy(user.avatar.split("/").pop().split(".")[0]);
+            }
+
+            const uploadedResponse = await cloudinary.uploader.upload(avatar);
+            avatar = uploadedResponse.secure_url;
+        }
+
+        if (coverImg) {
+            if (user.coverImg) {
+                await cloudinary.uploader.destroy(user.coverImg.split("/").pop().split(".")[0]);
+            }
+
+            const uploadedResponse = await cloudinary.uploader.upload(coverImg);
+            coverImg = uploadedResponse.secure_url;
+        }
+
+        user.name = name || user.name;
+        user.email = email || user.email;
+        user.username = username || user.username;
+        user.bio = bio || user.bio;
+        user.avatar = avatar || user.avatar;
+        user.coverImg = coverImg || user.coverImg;
+
+        user = await user.save();
+
+        // password should be null in response
+        user.password = null;
+
+        res.status(200).json({
+            status: 'success',
+            data: user
         })
 
 
