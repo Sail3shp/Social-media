@@ -5,6 +5,7 @@ import ApiError from "../utils/ApiError.js";
 import { refreshToken } from "./auth.controller.js";
 import bcrypt from "bcryptjs";
 import cloudinary from "../config/cloudinary.js";
+import mongoose from "mongoose";
 //updat,delete,changepassword,resetpassword
 
 export const deleteUser = async (req, res) => {
@@ -47,7 +48,7 @@ export const suggestedUsers = catchAsync(
         const users = await User.aggregate([
             {
                 $match: {
-                    _id: { $ne: userId },
+                    _id: { $ne: new mongoose.Types.ObjectId(userId) },
                 },
             },
             { $sample: { size: 10 } },
