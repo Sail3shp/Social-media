@@ -12,15 +12,18 @@ import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
 import { FaLink } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
-import { useQuery,useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery,useQueryClient } from "@tanstack/react-query";
 import { api } from "../utils/axios.js";
+import { useFollow } from "../hooks/useFollow.jsx";
+import toast from "react-hot-toast";
 
 const ProfilePage = () => {
     //const {data: authUser} = useQuery({queryKey: ['user']})
     const [coverImg, setCoverImg] = useState(null);
-    const [profileImg, setProfileImg] = useState(null);
+    const [avatar, setProfileImg] = useState(null);
     const [feedType, setFeedType] = useState("posts");
     const queryClient = useQueryClient()
+   const {follow,isPending} = useFollow() 
 
     let {username} = useParams()
 
@@ -39,6 +42,27 @@ const ProfilePage = () => {
 		},
 	})
 
+    const {mutate:updateProfile,isPending:isUpdatingProfile} = useMutation({
+        mutationFn: async() => {
+            try {
+                const res = await api.post('/auth/update',{avatar,coverImg})
+                console.log(res,res.data)
+                return res.data
+            } catch (error) {
+                console.log(error)
+                throw new Error(error.message)
+            }
+        },
+        onSuccess:async() => {
+            toast.success('profile updated successfully')
+            Promise.all([
+                await queryClient.invalidateQueries({queryKey:['user']}),
+                await queryClient.invalidateQueries({queryKey:['userDetail']})
+            ])
+            
+        }
+    })
+
     useEffect(() => {
 		refetch()
 	},[refetch,username])
@@ -47,6 +71,7 @@ const ProfilePage = () => {
     const profileImgRef = useRef(null);
 
     const isMyProfile = user?.data?._id == authUser?._id;
+    const amIFollowing = authUser?.following.includes(user?.data._id)
 
 
     const handleImgChange = (e, state) => {
@@ -112,7 +137,7 @@ const ProfilePage = () => {
                                 {/* USER AVATAR */}
                                 <div className='avatar absolute -bottom-16 left-4'>
                                     <div className='w-32 rounded-full relative group/avatar'>
-                                        <img src={profileImg || user?.data?.profileImg || "/avatar-placeholder.png"} />
+                                        <img src={avatar || user?.data?.avatar || "/avatar-placeholder.png"} />
                                         <div className='absolute top-5 right-3 p-1 bg-primary rounded-full group-hover/avatar:opacity-100 opacity-0 cursor-pointer'>
                                             {isMyProfile && (
                                                 <MdEdit
@@ -129,17 +154,20 @@ const ProfilePage = () => {
                                 {!isMyProfile && (
                                     <button
                                         className='btn btn-outline rounded-full btn-sm'
-                                        onClick={() => alert("Followed successfully")}
+                                        onClick={() => follow(user?.data?._id)}
                                     >
-                                        Follow
+                                        {isPending && "Loading..."}
+                                        {!isPending && amIFollowing && "Unfollow"}
+                                        {!isPending && !amIFollowing && "Follow"}
                                     </button>
                                 )}
-                                {(coverImg || profileImg) && (
+                                {(coverImg || avatar) && (
                                     <button
                                         className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
-                                        onClick={() => alert("Profile updated successfully")}
+                                        onClick={() => updateProfile()}
                                     >
-                                        Update
+                                        {isUpdatingProfile && "Updating..."}
+                                        {!isUpdatingProfile && "Update"}
                                     </button>
                                 )}
                             </div>
