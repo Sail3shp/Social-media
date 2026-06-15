@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-const EditProfileModal = () => {
+const EditProfileModal = ({authUser}) => {
 	const [formData, setFormData] = useState({
-		fullName: "",
+		name: "",
 		username: "",
 		email: "",
 		bio: "",
-		link: "",
 		newPassword: "",
 		currentPassword: "",
 	});
@@ -14,6 +13,18 @@ const EditProfileModal = () => {
 	const handleInputChange = (e) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
 	};
+	useEffect(() => {
+		if(authUser){
+			setFormData({
+				name:authUser.name,
+				username: authUser.username,
+				email: authUser.email,
+				bio: authUser.bio,
+				newPassword: '',
+				currentPassword: ''
+			})
+		}
+	},[authUser])
 
 	return (
 		<>
@@ -38,8 +49,8 @@ const EditProfileModal = () => {
 								type='text'
 								placeholder='Full Name'
 								className='flex-1 input border border-gray-700 rounded p-2 input-md'
-								value={formData.fullName}
-								name='fullName'
+								value={formData.name}
+								name='name'
 								onChange={handleInputChange}
 							/>
 							<input
@@ -86,14 +97,6 @@ const EditProfileModal = () => {
 								onChange={handleInputChange}
 							/>
 						</div>
-						<input
-							type='text'
-							placeholder='Link'
-							className='flex-1 input border border-gray-700 rounded p-2 input-md'
-							value={formData.link}
-							name='link'
-							onChange={handleInputChange}
-						/>
 						<button className='btn btn-primary rounded-full btn-sm text-white'>Update</button>
 					</form>
 				</div>
