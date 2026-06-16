@@ -9,17 +9,19 @@ export const useFollow = () => {
         mutationFn: async(id) => {
             try {
                 const res = await api.post(`/auth/follow/${id}`)
-                console.log(res)
                 return res.data
             } catch (error) {
                 console.log(error)
                 throw new Error(error.message)
             }
         },
-        onSuccess: () => {
+        onSuccess: (res) => {
+            console.log(res)
+            toast.success(res.message)
 			Promise.all([
 				queryClient.invalidateQueries({ queryKey: ["suggestedUsers"] }),
 				queryClient.invalidateQueries({ queryKey: ["userDetail"] }),
+                queryClient.invalidateQueries({queryKey:['user']})
 			]);
 		},
         onError: (error) => {

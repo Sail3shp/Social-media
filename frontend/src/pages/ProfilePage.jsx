@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import Posts from "../component/Posts";
 import ProfileHeaderSkeleton from "../component/ProfileHeaderSkeleton";
 import EditProfileModal from "./EditProfileModal";
+import { useUpdateProfile } from "../hooks/useUpdateProfile.jsx";
 
 import { POSTS } from "../utils/dummy.js";
 
@@ -16,6 +17,7 @@ import { useMutation, useQuery,useQueryClient } from "@tanstack/react-query";
 import { api } from "../utils/axios.js";
 import { useFollow } from "../hooks/useFollow.jsx";
 import toast from "react-hot-toast";
+import { formatMemberSinceDate } from "../utils/date.js";
 
 const ProfilePage = () => {
     //const {data: authUser} = useQuery({queryKey: ['user']})
@@ -42,27 +44,7 @@ const ProfilePage = () => {
 		},
 	})
 
-    const {mutate:updateProfile,isPending:isUpdatingProfile} = useMutation({
-        mutationFn: async() => {
-            try {
-                const res = await api.post('/auth/update',{avatar,coverImg})
-                console.log(res,res.data)
-                return res.data
-            } catch (error) {
-                console.log(error)
-                throw new Error(error.message)
-            }
-        },
-        onSuccess:async() => {
-            toast.success('profile updated successfully')
-            Promise.all([
-                await queryClient.invalidateQueries({queryKey:['user']}),
-                await queryClient.invalidateQueries({queryKey:['userDetail']})
-            ])
-            
-        }
-    })
-
+   const {updateProfile,isUpdatingProfile} = useUpdateProfile() 
     useEffect(() => {
 		refetch()
 	},[refetch,username])
@@ -72,6 +54,7 @@ const ProfilePage = () => {
 
     const isMyProfile = user?.data?._id == authUser?._id;
     const amIFollowing = authUser?.following.includes(user?.data._id)
+    const joinedSinceDate = formatMemberSinceDate(user?.data.createdAt)
 
 
     const handleImgChange = (e, state) => {
@@ -164,7 +147,13 @@ const ProfilePage = () => {
                                 {(coverImg || avatar) && (
                                     <button
                                         className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
-                                        onClick={() => updateProfile()}
+                                        onClick={async() => 
+                                        {
+                                            await updateProfile({avatar,coverImg})
+                                            setCoverImg(null)
+                                            setProfileImg(null)
+                                        }
+                                        }
                                     >
                                         {isUpdatingProfile && "Updating..."}
                                         {!isUpdatingProfile && "Update"}
@@ -182,7 +171,7 @@ const ProfilePage = () => {
                                 <div className='flex gap-2 flex-wrap'>
                                     <div className='flex gap-2 items-center'>
                                         <IoCalendarOutline className='w-4 h-4 text-slate-500' />
-                                        <span className='text-sm text-slate-500'>Joined July 2021</span>
+                                        <span className='text-sm text-slate-500'>{joinedSinceDate}</span>
                                     </div>
                                 </div>
                                 <div className='flex gap-2'>

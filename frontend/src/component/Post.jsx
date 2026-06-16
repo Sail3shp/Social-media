@@ -8,6 +8,7 @@ import { Link } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../utils/axios";
 import toast from "react-hot-toast";
+import { formatPostDate } from "../utils/date";
 
 const Post = ({ post }) => {
     const [comment, setComment] = useState("");
@@ -18,7 +19,7 @@ const Post = ({ post }) => {
 
     const isMyPost = post.user._id == user._id;
 
-    const formattedDate = "1h";
+    const formattedDate = formatPostDate(post.createdAt);
 
 
     const {mutate:deletePost,isPending} = useMutation({
@@ -135,7 +136,6 @@ const Post = ({ post }) => {
                                     {post.comments.length}
                                 </span>
                             </div>
-                            {/* We're using Modal Component from DaisyUI */}
                             <dialog id={`comments_modal${post._id}`} className='modal border-none outline-none'>
                                 <div className='modal-box rounded border border-gray-600'>
                                     <h3 className='font-bold text-lg mb-4'>COMMENTS</h3>
