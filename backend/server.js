@@ -8,6 +8,7 @@ import authRouter from './routes/auth.route.js'
 import postRouter from './routes/post.route.js'
 import notificationRouter from './routes/notification.route.js'
 import { errorHandler } from './controllers/error.controller.js'
+import path from 'node:path'
 dotenv.config()
 
 
@@ -20,6 +21,7 @@ process.on('uncaughtException',(error) => {
 })
 
 const PORT = process.env.PORT || 9256
+const __dirname = path.resolve()
 const app = express()
 app.use(cors({
     origin: "http://localhost:5173", 
@@ -38,6 +40,13 @@ app.use('/api/v1/auth',authRouter)
 app.use('/api/v1/post',postRouter)
 app.use('/api/v1/notification',notificationRouter)
 
+if(process.env.NODE_ENV === 'production'){
+    app.use(express.static(path.join(__dirname,"/frontend/dist")))
+    
+    app.get('/{*splat}',(req,res) => {
+        res.sendFile(path.resolve(__dirname,"frontend","dist","index.html"))
+    })
+}
 app.use(errorHandler)
 
 const server = app.listen(PORT,() => {
