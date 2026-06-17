@@ -6,6 +6,7 @@ import cors from 'cors'
 import { connectDb } from './config/connectDb.js'
 import authRouter from './routes/auth.route.js'
 import postRouter from './routes/post.route.js'
+import notificationRouter from './routes/notification.route.js'
 import { errorHandler } from './controllers/error.controller.js'
 dotenv.config()
 
@@ -35,6 +36,7 @@ app.get('/check',(req,res) => {
 
 app.use('/api/v1/auth',authRouter)
 app.use('/api/v1/post',postRouter)
+app.use('/api/v1/notification',notifacationRouter)
 
 app.use(errorHandler)
 

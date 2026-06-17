@@ -3,6 +3,7 @@ import { catchAsync } from "../middlewares/catchAsync.js";
 import ApiError from "../utils/ApiError.js";
 import cloudinary from "../config/cloudinary.js";
 import User from '../models/User.model.js'
+import Notification from "../models/notification.model.js";
 
 export const getPost = catchAsync(async (req, res) => {
     const posts = await Post.find().sort({ createdAt: -1 }).populate({
@@ -106,7 +107,12 @@ export const likeAndUnlikePost = catchAsync(
                     }
                 }
             )
-            console.log(likedPost)
+
+            await Notification.create({
+                to: req.userId,
+                from: post.user._id,
+                type: "like"
+            })
             return res.status(200).json({
                 status: 'success',
                 message: 'Post liked'

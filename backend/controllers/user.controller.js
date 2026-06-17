@@ -110,7 +110,12 @@ export const followUnfollow = catchAsync(
                 }),
                 User.findByIdAndUpdate(req.userId, {
                     $addToSet: { following: req.params.id }
-                })
+                }),
+                Notification.create({
+                to: req.params.id,
+                from: req.userId,
+                type: "follow"
+            })
             ]);
 
             return res.status(201).json({
