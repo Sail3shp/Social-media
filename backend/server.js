@@ -36,7 +36,7 @@ app.get('/check',(req,res) => {
 
 app.use('/api/v1/auth',authRouter)
 app.use('/api/v1/post',postRouter)
-app.use('/api/v1/notification',notifacationRouter)
+app.use('/api/v1/notification',notificationRouter)
 
 app.use(errorHandler)
 

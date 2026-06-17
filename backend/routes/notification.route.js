@@ -1,6 +1,6 @@
 import express from 'express'
-import verifyUser from '../middlewares/verifyUser'
-import { deleteNotifications, getNotifications } from '../controllers/notification.controller'
+import verifyUser from '../middlewares/verifyUser.js'
+import { deleteNotifications, getNotifications } from '../controllers/notification.controller.js'
 
 const router = express.Router()
 

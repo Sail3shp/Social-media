@@ -1,6 +1,6 @@
-import { catchAsync } from "../middlewares/catchAsync";
-import Notification from "../models/notification.model";
-import ApiError from "../utils/ApiError";
+import { catchAsync } from "../middlewares/catchAsync.js";
+import Notification from "../models/notification.model.js";
+import ApiError from "../utils/ApiError.js";
 
 export const getNotifications = catchAsync(
     async (req, res) => {
@@ -32,7 +32,7 @@ export const getNotifications = catchAsync(
 )
 
 export const deleteNotifications = catchAsync(
-    async() => {
+    async(req,res) => {
         const userId = req.userId
 
         await Notification.deleteMany({
