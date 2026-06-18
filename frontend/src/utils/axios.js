@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-    baseURL: 'http://localhost:8848/api/v1',
+    baseURL: 'https://social-media-tosd.onrender.com/',
     withCredentials: true
 })
 
