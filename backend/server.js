@@ -6,6 +6,7 @@ import cors from 'cors'
 import { connectDb } from './config/connectDb.js'
 import authRouter from './routes/auth.route.js'
 import postRouter from './routes/post.route.js'
+import chatRouter from './routes/chat.router.js'
 import notificationRouter from './routes/notification.route.js'
 import { errorHandler } from './controllers/error.controller.js'
 import path from 'node:path'
@@ -39,6 +40,7 @@ app.get('/check',(req,res) => {
 app.use('/api/v1/auth',authRouter)
 app.use('/api/v1/post',postRouter)
 app.use('/api/v1/notification',notificationRouter)
+app.use('/api/v1/chat',chatRouter)
 
 if(process.env.NODE_ENV === 'production'){
     app.use(express.static(path.join(__dirname,"/frontend/dist")))
