@@ -11,6 +11,7 @@ import ProfilePage from './pages/ProfilePage'
 import { Toaster } from 'react-hot-toast'
 import { useQuery } from '@tanstack/react-query'
 import { api } from './utils/axios'
+import ChatPage from './pages/ChatPage'
 
 function App() {
   const {isPending,data: user} = useQuery({
@@ -45,6 +46,8 @@ function App() {
         <Route path='/signup' element={!user ? <SignupPage /> : <Navigate to={'/'} />} />
         <Route path='/notification' element={user ? <NotificationPage /> : <Navigate to={'/login'} />} />
         <Route path='/profile/:username' element={user ? <ProfilePage /> : <Navigate to={'/login'} />} />
+        <Route path='/chat' element={user ? <ChatPage /> : <Navigate to={'/login'} />} />
+        
       </Routes>
       {user &&<RightPanel />}
       <Toaster />
