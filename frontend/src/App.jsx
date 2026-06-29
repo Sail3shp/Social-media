@@ -12,9 +12,10 @@ import { Toaster } from 'react-hot-toast'
 import { useQuery } from '@tanstack/react-query'
 import { api } from './utils/axios'
 import ChatPage from './pages/ChatPage'
+import Messages from './component/Messages'
 
 function App() {
-  const {isPending,data: user} = useQuery({
+  const { isPending, data: user } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
       try {
@@ -46,10 +47,13 @@ function App() {
         <Route path='/signup' element={!user ? <SignupPage /> : <Navigate to={'/'} />} />
         <Route path='/notification' element={user ? <NotificationPage /> : <Navigate to={'/login'} />} />
         <Route path='/profile/:username' element={user ? <ProfilePage /> : <Navigate to={'/login'} />} />
-        <Route path='/chat' element={user ? <ChatPage /> : <Navigate to={'/login'} />} />
-        
+        <Route path='/chat' element={user ? <ChatPage /> : <Navigate to={'/login'} />} >
+          <Route index element={<div className="flex-1 flex items-center justify-center">Message someone</div>} />
+          <Route path=":id" element={<Messages />} />
+        </Route>
+
       </Routes>
-      {user &&<RightPanel />}
+      {user && <RightPanel />}
       <Toaster />
     </div>
   )
