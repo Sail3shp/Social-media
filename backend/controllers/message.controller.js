@@ -84,3 +84,25 @@ export const getMessages = catchAsync(
 
     }
 )
+
+export const getSidebarUsers = catchAsync(
+    async(req,res) => {
+        const senderId = req.userId
+
+        const conversations = await Conversation.find({
+            members: senderId
+        }).populate({
+            path:'members',
+            select: 'username email avatar'
+        })
+        let users = conversations.map((conversation) => conversation.members.find(member => member._id.toString() !== senderId))
+        console.log(users)
+
+        res.status(200).json({
+            status:'success',
+            data: users
+        })
+
+
+    }
+)
